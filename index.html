@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Dashboard - Separation of Concerns</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 20px;
+            background-color: #e9e9e9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 { text-align: center; color: #222; text-transform: uppercase; }
+
+        /* Toolbar: Tìm kiếm, Sắp xếp và Phân trang */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #search-input, .toolbar-select {
+            padding: 10px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        #search-input { width: 250px; }
+
+        /* Bảng dữ liệu */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border: 2px solid #333;
+        }
+
+        th { background-color: #000; color: #fff; padding: 15px; text-align: left; }
+        td { padding: 12px; border: 1px solid #444; }
+
+        /* Dòng xen kẽ đen trắng cực đậm */
+        tr:nth-child(odd) { background-color: #ffffff; color: #000; }
+        tr:nth-child(even) { background-color: #333333; color: #ffffff; }
+        tr:hover { background-color: #ffcc00 !important; color: #000 !important; }
+
+        .product-img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+
+        /* Nút phân trang */
+        .pagination-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-buttons button {
+            padding: 8px 12px;
+            border: 1px solid #333;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .pagination-buttons button.active {
+            background: #000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Dashboard Sản Phẩm</h2>
+
+    <div class="toolbar">
+        <input type="text" id="search-input" placeholder="Tìm theo tên sản phẩm...">
+        
+        <div class="sort-controls">
+            Sắp xếp: 
+            <select id="sort-select" class="toolbar-select">
+                <option value="none">Mặc định</option>
+                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-desc">Giá: Cao đến Thấp</option>
+                <option value="title-asc">Tên: A-Z</option>
+                <option value="title-desc">Tên: Z-A</option>
+            </select>
+        </div>
+
+        <div class="pagination-controls">
+            Hiển thị: 
+            <select id="rows-per-page" class="toolbar-select">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Hình ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Giá</th>
+                <th>Mô tả</th>
+            </tr>
+        </thead>
+        <tbody id="product-list"></tbody>
+    </table>
+
+    <div id="pagination-buttons" class="pagination-buttons"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

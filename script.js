@@ -1,113 +1,96 @@
-let allProducts = [];      
-let filteredData = [];     
+let allProducts = [];
+let filteredData = [];
 let currentPage = 1;
 let rowsPerPage = 10;
 
 const tableBody = document.getElementById('product-list');
 const searchInput = document.getElementById('search-input');
-const rowsSelect = document.getElementById('rows-per-page');
 const sortSelect = document.getElementById('sort-select');
-const paginationContainer = document.getElementById('pagination-buttons');
+const rowsSelect = document.getElementById('rows-per-page');
+const paginationContainer = document.getElementById('pagination');
 
-// 1. Lấy dữ liệu từ API
-async function fetchData() {
+// 1. Fetch dữ liệu
+async function loadData() {
     try {
-        const res = await fetch('https://api.escuelajs.co/api/v1/products');
-        allProducts = await res.json();
-        filteredData = [...allProducts]; 
+        const response = await fetch('https://api.escuelajs.co/api/v1/products');
+        allProducts = await response.json();
+        filteredData = [...allProducts];
         renderUI();
-    } catch (err) {
-        tableBody.innerHTML = '<tr><td colspan="5">Lỗi tải dữ liệu</td></tr>';
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td colspan="5">Lỗi tải dữ liệu API</td></tr>';
     }
 }
 
-// 2. Hàm xử lý sắp xếp
-function sortData(data) {
-    const type = sortSelect.value;
-    if (type === 'none') return data;
-
-    return [...data].sort((a, b) => {
-        switch (type) {
-            case 'price-asc': return a.price - b.price;
-            case 'price-desc': return b.price - a.price;
-            case 'title-asc': return a.title.localeCompare(b.title);
-            case 'title-desc': return b.title.localeCompare(a.title);
-            default: return 0;
-        }
-    });
-}
-
-// 3. Hàm render giao diện chính
+// 2. Hàm vẽ giao diện chính
 function renderUI() {
-    // Sắp xếp dữ liệu đã lọc
-    const sortedData = sortData(filteredData);
+    let dataToDisplay = [...filteredData];
 
-    // Tính toán phân trang
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const paginatedItems = sortedData.slice(startIndex, endIndex);
+    // --- CHỨC NĂNG SẮP XẾP ---
+    const sortType = sortSelect.value;
+    if (sortType === 'price-asc') dataToDisplay.sort((a, b) => a.price - b.price);
+    else if (sortType === 'price-desc') dataToDisplay.sort((a, b) => b.price - a.price);
+    else if (sortType === 'name-asc') dataToDisplay.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortType === 'name-desc') dataToDisplay.sort((a, b) => b.title.localeCompare(a.title));
+
+    // --- CHỨC NĂNG CHIA TRANG ---
+    const start = (currentPage - 1) * rowsPerPage;
+    const paginatedItems = dataToDisplay.slice(start, start + rowsPerPage);
 
     renderTable(paginatedItems);
-    renderPagination(sortedData.length);
+    renderPaginationButtons(dataToDisplay.length);
 }
 
-// 4. Hàm vẽ bảng
+// 3. Vẽ bảng
 function renderTable(items) {
-    if (items.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center">Không tìm thấy sản phẩm</td></tr>';
-        return;
-    }
-    tableBody.innerHTML = items.map(p => `
-        <tr>
-            <td>${p.id}</td>
-            <td><img src="${p.images[0]}" class="product-img" onerror="this.src='https://via.placeholder.com/80'"></td>
-            <td><strong>${p.title}</strong></td>
-            <td>$${p.price}</td>
-            <td>${p.description.substring(0, 70)}...</td>
-        </tr>
-    `).join('');
+    tableBody.innerHTML = items.map(p => {
+        let img = p.images[0].replace(/[\[\]"\\]/g, "");
+        return `
+            <tr>
+                <td>${p.id}</td>
+                <td><img src="${img}" class="product-img" referrerpolicy="no-referrer" onerror="this.src='https://via.placeholder.com/80'"></td>
+                <td><strong>${p.title}</strong></td>
+                <td>$${p.price}</td>
+                <td>${p.description.substring(0, 60)}...</td>
+            </tr>
+        `;
+    }).join('');
 }
 
-// 5. Hàm tạo nút phân trang
-function renderPagination(totalItems) {
-    const pageCount = Math.ceil(totalItems / rowsPerPage);
+// 4. Vẽ nút phân trang
+function renderPaginationButtons(total) {
+    const totalPages = Math.ceil(total / rowsPerPage);
     paginationContainer.innerHTML = '';
-    if (pageCount <= 1) return;
+    if (totalPages <= 1) return;
 
-    for (let i = 1; i <= pageCount; i++) {
+    for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
         btn.innerText = i;
         if (i === currentPage) btn.classList.add('active');
-        btn.addEventListener('click', () => {
-            currentPage = i;
-            renderUI();
-        });
+        btn.onclick = () => { currentPage = i; renderUI(); };
         paginationContainer.appendChild(btn);
     }
 }
 
-// --- GẮN SỰ KIỆN ---
+// --- XỬ LÝ SỰ KIỆN ---
 
-// Tìm kiếm
-searchInput.addEventListener('input', (e) => {
-    const keyword = e.target.value.toLowerCase();
-    filteredData = allProducts.filter(p => p.title.toLowerCase().includes(keyword));
-    currentPage = 1; 
-    renderUI();
-});
-
-// Thay đổi kiểu sắp xếp
-sortSelect.addEventListener('change', () => {
+// Tìm kiếm onChange
+searchInput.oninput = () => {
+    filteredData = allProducts.filter(p => p.title.toLowerCase().includes(searchInput.value.toLowerCase()));
     currentPage = 1;
     renderUI();
-});
+};
 
-// Thay đổi số lượng dòng
-rowsSelect.addEventListener('change', (e) => {
-    rowsPerPage = parseInt(e.target.value);
-    currentPage = 1; 
+// Sắp xếp
+sortSelect.onchange = () => {
+    currentPage = 1;
     renderUI();
-});
+};
 
-// Chạy hàm lấy dữ liệu lần đầu
-fetchData();
+// Đổi số dòng hiển thị
+rowsSelect.onchange = () => {
+    rowsPerPage = parseInt(rowsSelect.value);
+    currentPage = 1;
+    renderUI();
+};
+
+loadData();
